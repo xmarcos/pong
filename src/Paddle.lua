@@ -44,6 +44,10 @@ function Paddle:init(x, y, width, height, type)
     self.type = (type == PADDLE_TYPE_HUMAN or type == PADDLE_TYPE_BOT) and type or PADDLE_TYPE_HUMAN
 end
 
+function Paddle:getType()
+    return self.type
+end
+
 function Paddle:human()
     return PADDLE_TYPE_HUMAN
 end

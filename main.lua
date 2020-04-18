@@ -337,7 +337,8 @@ function love.draw()
 
     -- display FPS for debugging; simply comment out to remove
     displayFPS()
-
+    -- display player type above score
+    displayPlayerInfo()
     -- end our drawing to push
     push:finish()
 end
@@ -363,4 +364,11 @@ function displayFPS()
     love.graphics.setColor(0, 1, 0, 1)
     love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+function displayPlayerInfo()
+    love.graphics.setFont(smallFont)
+    -- love.graphics.setColor(0, 1, 0, 1)
+    love.graphics.print(player1:getType(), VIRTUAL_WIDTH / 2 - 50, (VIRTUAL_HEIGHT / 3) -10)
+    love.graphics.print(player2:getType(), VIRTUAL_WIDTH / 2 + 30, (VIRTUAL_HEIGHT / 3) -10)
 end
