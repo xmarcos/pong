@@ -38,8 +38,10 @@ function Paddle:init(x, y, width, height, type)
     self.width  = width
     self.height = height
     self.dy     = 0
-    -- ensure we only accep one of the two values (human, bot) or fallback to human
-    self.type   = (type == PADDLE_TYPE_HUMAN or type == PADDLE_TYPE_BOT) and type or PADDLE_TYPE_HUMAN
+    -- to avoid calculating on each update
+    self.lower_bound = VIRTUAL_HEIGHT - self.height
+    -- ensure we only accept one of the two values (human, bot) or fallback to human
+    self.type = (type == PADDLE_TYPE_HUMAN or type == PADDLE_TYPE_BOT) and type or PADDLE_TYPE_HUMAN
 end
 
 function Paddle:human()
@@ -58,7 +60,7 @@ function Paddle:isBot()
     return self.type == PADDLE_TYPE_BOT
 end
 
-function Paddle:update(dt)
+function Paddle:update(dt, ball)
     if self:isHuman() then
         -- math.max here ensures that we're the greater of 0 or the player's
         -- current calculated Y position when pressing up so that we don't
@@ -71,10 +73,30 @@ function Paddle:update(dt)
         -- height (or else it will go partially below, since position is
         -- based on its top left corner)
         else
-            self.y = math.min(VIRTUAL_HEIGHT - self.height, self.y + self.dy * dt)
+            self.y = math.min(self.lower_bound, self.y + self.dy * dt)
         end
     elseif self:isBot() then
-        self.dy = 0
+        ball_edge = math.min(ball.y + ball.height, VIRTUAL_HEIGHT)
+        paddle_edge = math.min(self.y + self.height, VIRTUAL_HEIGHT)
+        ball_direction = ball.dy <= 0 and 'up' or 'down'
+
+        self.dy = (ball_direction == 'down' and PADDLE_SPEED or -PADDLE_SPEED)
+
+        if self.dy < 0 then
+            self.y = math.max(
+                0,
+                -- prevents the paddle from going below the lower edge when the ball changes direction and the paddle is halfway to the bottom
+                math.min(ball.y, self.lower_bound),
+                self.y + self.dy * dt
+            )
+        else
+            self.y = math.min(
+                self.lower_bound,
+                -- prevents the paddle from going above 0 when the ball changes direction and the paddle is halfway to the top
+                math.max(0, ball_edge - self.height),
+                self.y + self.dy * dt
+            )
+        end
     end
 end
 

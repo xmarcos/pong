@@ -250,10 +250,10 @@ function love.update(dt)
     -- scale the velocity by dt so movement is framerate-independent
     if gameState == 'play' then
         ball:update(dt)
+        player1:update(dt, ball)
+        player2:update(dt, ball)
     end
 
-    player1:update(dt)
-    player2:update(dt)
 end
 
 --[[
