@@ -28,6 +28,10 @@ Where `$MODE` is one of:
 - `human-human`
 - `bot-bot`
 
+## Demo Video
+
+[![](images/bot-bot.png)](https://youtu.be/WclHCTPT_gw)
+
 ## Notes
 
 The code has been upgraded to run on the latest version of LÖVE 2D —11.3 (Mysterious Mysteries).
