@@ -12,9 +12,21 @@ The `bot` player follows the ball as it moves, so it's very hard to beat in its 
 
 I'll try to add a difficulty selector in the future, to give humans a chance. 😅
 
-### bot vs bot
+### Game Mode
 
-The game can be configured so that both players are bots. Replace `Paddle:human()` with `Paddle:bot()` on line 95.
+The default Game Mode is `bot-human`, which means Player 1 plays as a `bot`, and Player 2 is `human` controlled.
+
+Additional modes can be activated via command-line arguments:
+
+```bash
+love . $MODE
+```
+
+Where `$MODE` is one of:
+
+- `bot-human` (default)
+- `human-human`
+- `bot-bot`
 
 ## Notes
 
