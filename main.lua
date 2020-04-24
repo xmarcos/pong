@@ -13,7 +13,7 @@
 
     This version is built to more closely resemble the NES than
     the original Pong machines or the Atari 2600 in terms of
-    resolution, though in widescreen (16:9) so it looks nicer on 
+    resolution, though in widescreen (16:9) so it looks nicer on
     modern systems.
 ]]
 
@@ -22,22 +22,22 @@
 -- a more retro aesthetic
 --
 -- https://github.com/Ulydev/push
-push = require 'push'
+push = require 'lib/push'
 
 -- the "Class" library we're using will allow us to represent anything in
 -- our game as code, rather than keeping track of many disparate variables and
 -- methods
 --
 -- https://github.com/vrld/hump/blob/master/class.lua
-Class = require 'class'
+Class = require 'lib/class'
 
 -- our Paddle class, which stores position and dimensions for each Paddle
 -- and the logic for rendering them
-require 'Paddle'
+require 'src/Paddle'
 
 -- our Ball class, which isn't much different than a Paddle structure-wise
 -- but which will mechanically function very differently
-require 'Ball'
+require 'src/Ball'
 
 -- size of our actual window
 WINDOW_WIDTH = 1280
@@ -54,7 +54,7 @@ PADDLE_SPEED = 200
     Called just once at the beginning of the game; used to set up
     game objects, variables, etc. and prepare the game world.
 ]]
-function love.load()
+function love.load(cli_args)
     -- set love's default filter to "nearest-neighbor", which essentially
     -- means there will be no filtering of pixels (blurriness), which is
     -- important for a nice crisp, 2D look
@@ -67,9 +67,9 @@ function love.load()
     math.randomseed(os.time())
 
     -- initialize our nice-looking retro text fonts
-    smallFont = love.graphics.newFont('font.ttf', 8)
-    largeFont = love.graphics.newFont('font.ttf', 16)
-    scoreFont = love.graphics.newFont('font.ttf', 32)
+    smallFont = love.graphics.newFont('fonts/font.ttf', 8)
+    largeFont = love.graphics.newFont('fonts/font.ttf', 16)
+    scoreFont = love.graphics.newFont('fonts/font.ttf', 32)
     love.graphics.setFont(smallFont)
 
     -- set up our sound effects; later, we can just index this table and
@@ -79,7 +79,7 @@ function love.load()
         ['score'] = love.audio.newSource('sounds/score.wav', 'static'),
         ['wall_hit'] = love.audio.newSource('sounds/wall_hit.wav', 'static')
     }
-    
+
     -- initialize our virtual resolution, which will be rendered within our
     -- actual window no matter its dimensions
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
@@ -89,10 +89,24 @@ function love.load()
         canvas = false
     })
 
+    -- The default mode is bot-human:
+    --  Player 1: human
+    --  Player 2: bot
+    -- Additional modes available are: human-human and bot-bot
+    -- this information is received as the first command-line argument
+    -- love . MODE
+
+    local mode = cli_args[1] and cli_args[1] or 'bot-human'
+    -- Player 1 defaults to bot
+    local player1_type = mode == 'human-human' and Paddle:human() or Paddle:bot()
+    -- Player 2 defaults to human
+    local player2_type = mode == 'bot-bot' and Paddle:bot() or Paddle:human()
+
+
     -- initialize our player paddles; make them global so that they can be
     -- detected by other functions and modules
-    player1 = Paddle(10, 30, 5, 20)
-    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
+    player1 = Paddle(10, 30, 5, 20, player1_type)
+    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20, player2_type)
 
     -- place a ball in the middle of the screen
     ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
@@ -250,10 +264,10 @@ function love.update(dt)
     -- scale the velocity by dt so movement is framerate-independent
     if gameState == 'play' then
         ball:update(dt)
+        player1:update(dt, ball)
+        player2:update(dt, ball)
     end
 
-    player1:update(dt)
-    player2:update(dt)
 end
 
 --[[
@@ -304,7 +318,7 @@ function love.draw()
     push:start()
 
     love.graphics.clear(40/255, 45/255, 52/255, 1)
-    
+
     -- render different things depending on which part of the game we're in
     if gameState == 'start' then
         -- UI messages
@@ -314,7 +328,7 @@ function love.draw()
     elseif gameState == 'serve' then
         -- UI messages
         love.graphics.setFont(smallFont)
-        love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!", 
+        love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!",
             0, 10, VIRTUAL_WIDTH, 'center')
         love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
     elseif gameState == 'play' then
@@ -330,14 +344,15 @@ function love.draw()
 
     -- show the score before ball is rendered so it can move over the text
     displayScore()
-    
+
     player1:render()
     player2:render()
     ball:render()
 
     -- display FPS for debugging; simply comment out to remove
     displayFPS()
-
+    -- display player type above score
+    displayPlayerInfo()
     -- end our drawing to push
     push:finish()
 end
@@ -363,4 +378,11 @@ function displayFPS()
     love.graphics.setColor(0, 1, 0, 1)
     love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+function displayPlayerInfo()
+    love.graphics.setFont(smallFont)
+    -- love.graphics.setColor(0, 1, 0, 1)
+    love.graphics.print(player1:getType(), VIRTUAL_WIDTH / 2 - 50, (VIRTUAL_HEIGHT / 3) -10)
+    love.graphics.print(player2:getType(), VIRTUAL_WIDTH / 2 + 30, (VIRTUAL_HEIGHT / 3) -10)
 end
